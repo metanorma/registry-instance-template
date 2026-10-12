@@ -1,0 +1,49 @@
+= Metanorma Registry Instance Template
+
+A standards-registry site for Metanorma organizations: use this
+template, fill in the configuration, ship. Powered by the
+https://github.com/metanorma/standards-registry[registry engine] with
+the Astro reference renderer (in production at
+https://standards.calconnect.org and https://www.enosema.org/standards/).
+
+== Onboarding checklist
+
+. *Use this template* (green "Use this template" button) and clone your copy.
+. `_config.yml` — replace every `YOUR ORG` / `YOUR-ORG` marker: site
+  identity, `registry:` map, `branding:` block (logos, copyright,
+  footer links).
+. `_data/navigation.yml` — your categories and draft stages.
+. `metanorma.aggregate.yml` — your GitHub organization and the
+  `metanorma-release` topic your document repos carry.
+. Branding assets in `public/`:
+  * `assets/images/logo-light.svg`, `logo-dark.svg` (header/footer)
+  * `favicon.svg`, `favicon.png`, `favicon.ico`, `favicon-96x96.png`,
+    `apple-touch-icon.png`, `web-app-manifest-192x192.png`,
+    `web-app-manifest-512x512.png` (the icon set; the webmanifest
+    itself is generated from `_config.yml`)
+  * The template ships neutral placeholder icons — replace them.
+. Enable GitHub Pages (or mount the built `dist/` at
+  `registry.base_path` on your main site — the enosema.org pattern).
+. Your document repositories publish releases with the
+  `mn-release-metadata` block (see the engine's instance guide) —
+  `rake build` aggregates them.
+
+== Build
+
+....
+bundle install
+npm ci
+export GITHUB_TOKEN=$(gh auth token)
+bundle exec rake build      # fetch + enrich + citations + Astro + finalize
+....
+
+== Verify
+
+....
+bundle exec rake validate_schema validate_consistency verify_links
+bundle exec rake conformance  # certifies your site AND a golden fixture
+....
+
+See
+https://github.com/metanorma/standards-registry/blob/main/docs/instance-guide.md[the instance guide]
+for the full story.

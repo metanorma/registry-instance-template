@@ -1,0 +1,124 @@
+name: build_deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Use Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 3.4
+
+      - name: Cache aggregate state
+        uses: actions/cache@v4
+        with:
+          path: .cache/aggregate
+          key: mn-aggregate-${{ github.run_id }}
+          restore-keys: mn-aggregate-
+
+      - name: Build site (fetch releases + enrich catalog + Astro)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec rake build
+
+      - name: Validate catalog contract
+        run: |
+          bundle exec rake validate_schema
+          bundle exec rake validate_consistency
+
+      - name: Run test suite
+        run: bundle exec rspec
+
+      - name: Verify internal links
+        run: bundle exec rake verify_links
+
+      - name: Report catalog changes vs production
+        run: bundle exec rake report_changes
+
+      - name: Debug
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: |
+          ls -al dist
+          ls dist/docs | head -20
+
+      - name: Sign catalog.json (Sigstore keyless)
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign and verify catalog.json
+        run: |
+          cosign sign-blob --yes             --output-signature dist/catalog.json.sig             --output-certificate dist/catalog.json.pem             dist/catalog.json
+          cosign verify-blob             --certificate dist/catalog.json.pem             --certificate-identity-regexp "^https://github\.com/YOUR-ORG/"             --certificate-oidc-issuer "https://token.actions.githubusercontent.com"             --signature dist/catalog.json.sig             dist/catalog.json
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  conformance:
+    name: Conformance suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Use Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 3.4
+
+      - name: Reference renderer vs golden fixtures
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec rake conformance
+
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

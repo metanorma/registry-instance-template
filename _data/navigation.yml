@@ -1,0 +1,15 @@
+categories:
+  - title: Standards
+    slug: standards
+    display_category_slug: standards
+    description: Standards published by YOUR ORG.
+    card_color: standard
+    card_css: cat-standard
+
+draft_stages:
+  - working-draft
+  - committee-draft
+  - draft
+  - proposal
+  - final-draft
+  - public-review

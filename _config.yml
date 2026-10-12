@@ -1,0 +1,54 @@
+# ============================================================
+# REGISTRY INSTANCE CONFIGURATION — edit this file, then
+# _data/navigation.yml, metanorma.aggregate.yml and the
+# branding assets in public/. That is the whole onboarding.
+# ============================================================
+
+title: YOUR ORG Standards Registry
+description: >-
+  The registry of YOUR ORG standards
+url: https://standards.YOUR-ORG.example.org
+
+# Everything the frontend renders about your organization.
+branding:
+  # Header/footer logos (public/assets/images/)
+  logo_light: /assets/images/logo-light.svg
+  logo_dark: /assets/images/logo-dark.svg
+  # Footer + copyright
+  copyright_name: YOUR ORG
+  copyright_url: https://www.YOUR-ORG.example.org/
+  footer:
+    community:
+      - text: YOUR ORG
+        url: https://www.YOUR-ORG.example.org/
+      - text: GitHub
+        url: https://github.com/YOUR-ORG
+    resources:
+      - text: Standards repository
+        url: https://github.com/YOUR-ORG/docs
+  # Icon set (public/) — see the README checklist
+  # icons:
+  #   favicon_svg: /favicon.svg
+  #   favicon_ico: /favicon.ico
+  #   favicon_png: /favicon-96x96.png
+  #   apple_touch: /apple-touch-icon.png
+  #   manifest_192: /web-app-manifest-192x192.png
+  #   manifest_512: /web-app-manifest-512x512.png
+
+registry:
+  org: yourorg
+  # Mount path ("" = own domain root), e.g. "/standards"
+  # when the registry serves under a path of a larger site.
+  base_path: ""
+  publisher_name: YOUR ORG
+  urn_namespace: yourorg
+  url_scheme: "/docs/:document_id/:year/"
+  docs_prefix: "/docs"
+  legacy_prefixes: []
+  features:
+    search: true
+    atom_feed: true
+    jsonld: true
+    opensearch: true
+    html: true
+  license_default: null   # never invent licenses; gaps are tracked
